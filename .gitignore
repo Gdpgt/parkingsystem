@@ -1,0 +1,4 @@
+target/
+
+# Pluggin "Local History" pour sauvegarder les modifs en local 
+.history
