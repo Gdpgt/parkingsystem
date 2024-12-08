@@ -76,7 +76,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        com.parkit.parkingsystem.App
+                                        com.parkit.parkingsystem.ParkingSystemApp
                                     </mainClass>
                                 </manifest>
                             </archive>
