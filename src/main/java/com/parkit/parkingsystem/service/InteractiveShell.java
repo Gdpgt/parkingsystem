@@ -11,7 +11,7 @@ public class InteractiveShell {
     private static final Logger logger = LogManager.getLogger("InteractiveShell");
 
     public static void loadInterface(){
-        logger.info("App initialized!!!");
+        logger.info("ParkingSystemApp initialized!!!");
         System.out.println("Welcome to Parking System!");
 
         boolean continueApp = true;
