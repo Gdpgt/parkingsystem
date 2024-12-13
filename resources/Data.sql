@@ -1,6 +1,6 @@
-/* Setting up PROD DB */
-create database prod;
-use prod;
+/* Setting up PROD_PARKINGSYSTEM DB */
+create database prod_parkingsystem;
+use prod_parkingsystem;
 
 create table parking(
 PARKING_NUMBER int PRIMARY KEY,
@@ -26,8 +26,8 @@ insert into parking(PARKING_NUMBER,AVAILABLE,TYPE) values(5,true,'BIKE');
 commit;
 
 /* Setting up TEST DB */
-create database test;
-use test;
+create database test_parkingsystem;
+use test_parkingsystem;
 
 create table parking(
 PARKING_NUMBER int PRIMARY KEY,
