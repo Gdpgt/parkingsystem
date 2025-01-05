@@ -108,13 +108,21 @@ public class ParkingService {
                 ParkingSpot parkingSpot = ticket.getParkingSpot();
                 parkingSpot.setAvailable(true);
                 parkingSpotDAO.updateParking(parkingSpot);
-                System.out.println("Please pay the parking fare: " + ticket.getPrice() + "€");
-                System.out.println("Recorded out-time for vehicle number " + ticket.getVehicleRegNumber() + " is: " + outTime);
+                displayExitMessage(ticket);
             }else{
                 System.out.println("Unable to update ticket information. Error occurred");
             }
         }catch(Exception e){
             logger.error("Unable to process exiting vehicle",e);
         }
+    }
+
+    private void displayExitMessage(Ticket ticket) {
+        if (ticket.getPrice() == 0.0) {
+            System.out.println("Thank you for using our parking. No payment needed.");
+        } else {
+            System.out.println("Please pay the parking fare: " + ticket.getPrice() + "€");
+        }
+        System.out.println("Recorded out-time for vehicle number " + ticket.getVehicleRegNumber() + " is: " + ticket.getOutTime());
     }
 }
