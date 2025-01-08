@@ -153,4 +153,34 @@ public class FareCalculatorServiceTest {
         assertEquals( 0.0, ticket.getPrice(), 0.01 );
     }
 
+    @Test
+    public void calculateFareCarWithDiscount(){
+        Date inTime = new Date();
+        inTime.setTime( System.currentTimeMillis() - (45 * 60 * 1000) );
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        ticket.setDiscount(true);
+        fareCalculatorService.calculateFare(ticket);
+        assertEquals(0.75 * Fare.CAR_RATE_PER_HOUR * 0.95, ticket.getPrice(), 0.01);
+    }
+
+    @Test
+    public void calculateFareBikeWithDiscount(){
+        Date inTime = new Date();
+        inTime.setTime( System.currentTimeMillis() - (45 * 60 * 1000) );
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.BIKE, false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        ticket.setDiscount(true);
+        fareCalculatorService.calculateFare(ticket);
+        assertEquals(0.75 * Fare.BIKE_RATE_PER_HOUR * 0.95, ticket.getPrice(), 0.01);
+    }
+
 }
