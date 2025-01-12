@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 public class ParkingServiceTest {
 
     private static ParkingService parkingService;
+    private Ticket ticket;
 
     @Mock
     private static InputReaderUtil inputReaderUtil;
@@ -42,18 +43,13 @@ public class ParkingServiceTest {
         try {
             when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
 
-            ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
-            Ticket ticket = new Ticket();
-            ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
-            ticket.setParkingSpot(parkingSpot);
-            ticket.setVehicleRegNumber("ABCDEF");
-            ticket.setPrice(1.5);
-            ticket.setDiscount(false);
-
             when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
+
             when(ticketDAO.updateTicket(any(Ticket.class), anyBoolean())).thenReturn(true);
             when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
             doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class));
+
+            when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
 
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         } catch (Exception e) {
@@ -63,18 +59,41 @@ public class ParkingServiceTest {
     }
 
     @Test
-    public void processExitingVehicleTest() {
+    public void processExitingVehicleTest() throws Exception {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
         try {
+            ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
+            Ticket ticket = new Ticket();
+            ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
+            ticket.setParkingSpot(parkingSpot);
+            ticket.setVehicleRegNumber("ABCDEF");
+            ticket.setPrice(1.5);
+            ticket.setDiscount(false);
+
             parkingService.processExitingVehicle();
 
+            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
             verify(ticketDAO, times(1)).getTicket(any(String.class));
-            verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
-            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class), eq(true));
             verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class));
+            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class), eq(true));
+            verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
 
             assertTrue(outContent.toString().contains("Please pay the parking fare: 1.5€"));
+        } finally {
+            System.setOut(System.out);
+        }
+    }
+
+    @Test
+    public void processIncomingVehicleTest() throws Exception {
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        try {
+            parkingService.processIncomingVehicle();
+
+            verify(parkingSpotDAO, times(1)).getNextAvailableSlot(any(ParkingType.class));
+            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
         } finally {
             System.setOut(System.out);
         }
