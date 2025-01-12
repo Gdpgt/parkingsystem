@@ -26,7 +26,7 @@ public class FareCalculatorService {
             double ratePerHour = switch (ticket.getParkingSpot().getParkingType()) {
                 case CAR -> Fare.CAR_RATE_PER_HOUR;
                 case BIKE -> Fare.BIKE_RATE_PER_HOUR;
-                default -> throw new IllegalArgumentException("Unkown Parking Type");
+                default -> throw new IllegalArgumentException("Unknown Parking Type");
             };
 
             double price = durationInHours * ratePerHour;
