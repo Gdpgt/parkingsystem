@@ -9,15 +9,18 @@ import java.math.RoundingMode;
 public class FareCalculatorService {
 
     public void calculateFare(Ticket ticket) {
+        calculateFare(ticket, false);
+    }
+
+    public void calculateFare(Ticket ticket, boolean isDiscounted) {
+
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ) {
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
 
         long inTimeMillis = ticket.getInTime().getTime();
         long outTimeMillis = ticket.getOutTime().getTime();
-
         long durationInMillis = outTimeMillis - inTimeMillis;
-
         double durationInHours = durationInMillis / (1000.0 * 60 * 60);
 
         if(durationInHours < 0.5) {
@@ -30,7 +33,7 @@ public class FareCalculatorService {
             };
 
             double price = durationInHours * ratePerHour;
-            if (ticket.getDiscount()) {
+            if (isDiscounted) {
                 price *= 0.95;
             }
 
