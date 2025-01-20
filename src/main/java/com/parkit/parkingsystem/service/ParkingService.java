@@ -39,7 +39,7 @@ public class ParkingService {
                 parkingSpotDAO.updateParking(parkingSpot); //allot this parking space and mark its availability as false
                 Date inTime = new Date();
                 Ticket newTicket = new Ticket();
-                //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME, DISCOUNT)
+                //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME
                 newTicket.setParkingSpot(parkingSpot);
                 newTicket.setVehicleRegNumber(vehicleRegNumber);
                 newTicket.setPrice(0);

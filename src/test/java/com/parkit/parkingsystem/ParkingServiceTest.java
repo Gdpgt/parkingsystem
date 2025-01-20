@@ -46,7 +46,6 @@ class ParkingServiceTest {
     public void setUpPerTest() {
         try {
             when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-            when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
             when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
             when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
             doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class));
@@ -60,23 +59,26 @@ class ParkingServiceTest {
 
     @Test
     void processExitingVehicleTest() throws Exception {
+        Ticket ticket = new Ticket();
+        ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
+        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
+        ticket.setVehicleRegNumber("ABCDEF");
+        ticket.setPrice(1.5);
+
+        when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(anyString())).thenReturn(1);
+
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
-        try {
-            ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
-            Ticket existingTicket = ticketDAO.getTicket("ABCDEF");
-            ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
-            ticket.setParkingSpot(parkingSpot);
-            ticket.setVehicleRegNumber("ABCDEF");
-            ticket.setPrice(1.5);
-            ticket.setDiscount(false);
 
+        try {
             parkingService.processExitingVehicle();
 
             verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
             verify(ticketDAO, times(1)).getTicket(any(String.class));
+            verify(ticketDAO, times(1)).getNbTickets(any(String.class));
             verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class));
-            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class), eq(true));
+            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
             verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
 
             assertTrue(outContent.toString().contains("Please pay the parking fare: 1.5€"));
