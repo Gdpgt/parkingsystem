@@ -20,12 +20,16 @@ import java.io.PrintStream;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ParkingServiceTest {
+class ParkingServiceTest {
 
     private static ParkingService parkingService;
+    
     private Ticket ticket;
 
     @Mock
@@ -42,15 +46,11 @@ public class ParkingServiceTest {
     public void setUpPerTest() {
         try {
             when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-
             when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
-
-            when(ticketDAO.updateTicket(any(Ticket.class), anyBoolean())).thenReturn(true);
+            when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
             when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
             doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class));
-
             when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
-
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,12 +59,12 @@ public class ParkingServiceTest {
     }
 
     @Test
-    public void processExitingVehicleTest() throws Exception {
+    void processExitingVehicleTest() throws Exception {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
         try {
             ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
-            Ticket ticket = new Ticket();
+            Ticket existingTicket = ticketDAO.getTicket("ABCDEF");
             ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
             ticket.setParkingSpot(parkingSpot);
             ticket.setVehicleRegNumber("ABCDEF");
@@ -86,7 +86,7 @@ public class ParkingServiceTest {
     }
 
     @Test
-    public void processIncomingVehicleTest() throws Exception {
+    void processIncomingVehicleTest() throws Exception {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
         try {
