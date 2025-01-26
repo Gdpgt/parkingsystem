@@ -85,6 +85,37 @@ class ParkingServiceTest {
     }
 
     @Test
+    void processExitingVehicleWithDiscountTest() throws Exception {
+        Ticket ticket = new Ticket();
+        ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
+        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
+        ticket.setVehicleRegNumber("ABCDEF");
+        ticket.setPrice(1.43);
+
+        when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(anyString())).thenReturn(2);
+        doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class), anyBoolean());
+
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+
+        try {
+            parkingService.processExitingVehicle();
+
+            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
+            verify(ticketDAO, times(1)).getTicket(any(String.class));
+            verify(ticketDAO, times(1)).getNbTickets(any(String.class));
+            verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class), anyBoolean());
+            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
+            verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
+
+            assertTrue(outContent.toString().contains("Please pay the parking fare (5% discount included): 1.43€"));
+        } finally {
+            System.setOut(System.out);
+        }
+    }
+
+    @Test
     void processIncomingVehicleTest() throws Exception {
         when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
 
