@@ -102,8 +102,10 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processIncomingVehicleTest() throws Exception {
+    void processIncomingVehicleNominalCaseTest() throws Exception {
         when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
+        when(ticketDAO.getTicket(anyString())).thenReturn(null);
+
 
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
