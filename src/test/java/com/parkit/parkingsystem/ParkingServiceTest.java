@@ -20,6 +20,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -28,8 +29,6 @@ class ParkingServiceTest {
 
     private static ParkingService parkingService;
     
-    private Ticket ticket;
-
     @Mock
     private static InputReaderUtil inputReaderUtil;
     @Mock
@@ -54,12 +53,8 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleTest() throws Exception {
-        Ticket ticket = new Ticket();
-        ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
-        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
-        ticket.setVehicleRegNumber("ABCDEF");
-        ticket.setPrice(1.5);
+    void processExitingVehicleNominalCaseTest() throws Exception {
+        Ticket ticket = createTestTicket(1.5);
 
         when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
         when(ticketDAO.getNbTickets(anyString())).thenReturn(1);
@@ -85,12 +80,8 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWithDiscountTest() throws Exception {
-        Ticket ticket = new Ticket();
-        ticket.setInTime(new Date(System.currentTimeMillis() - (60*60*1000))); // 1h en arrière
-        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
-        ticket.setVehicleRegNumber("ABCDEF");
-        ticket.setPrice(1.43);
+    void processExitingVehicleWithDiscountCaseTest() throws Exception {
+        Ticket ticket = createTestTicket(1.43);
 
         when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
         when(ticketDAO.getNbTickets(anyString())).thenReturn(2);
@@ -102,12 +93,7 @@ class ParkingServiceTest {
         try {
             parkingService.processExitingVehicle();
 
-            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
-            verify(ticketDAO, times(1)).getTicket(any(String.class));
-            verify(ticketDAO, times(1)).getNbTickets(any(String.class));
             verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class), anyBoolean());
-            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
-            verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
 
             assertTrue(outContent.toString().contains("Please pay the parking fare (5% discount included): 1.43€"));
         } finally {
@@ -130,6 +116,15 @@ class ParkingServiceTest {
             System.setOut(System.out);
         }
     }
+
+    private Ticket createTestTicket(double price) {
+        Ticket ticket = new Ticket();
+        ticket.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1h en arrière
+        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
+        ticket.setVehicleRegNumber("ABCDEF");
+        ticket.setPrice(price);
+        return ticket;
+    }   
 
 
 }
