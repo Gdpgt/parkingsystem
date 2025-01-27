@@ -149,7 +149,7 @@ class FareCalculatorServiceTest {
     }
 
     @Test
-    void calculateFareCarWithDiscount(){
+        void calculateFareCarWithDiscount(){
         Date inTime = new Date();
         inTime.setTime( System.currentTimeMillis() - (45 * 60 * 1000) );
         Date outTime = new Date();

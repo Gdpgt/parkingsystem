@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -54,6 +55,7 @@ class ParkingServiceTest {
 
     @Test
     void processExitingVehicleNominalCaseTest() throws Exception {
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         Ticket ticket = createTestTicket(1.5);
 
         when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
@@ -71,6 +73,8 @@ class ParkingServiceTest {
             verify(ticketDAO, times(1)).getNbTickets(any(String.class));
             verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class));
             verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
+            assertEquals(parkingSpot, ticket.getParkingSpot());
+            assertTrue(parkingSpot.isAvailable());
             verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
 
             assertTrue(outContent.toString().contains("Please pay the parking fare: 1.5€"));
