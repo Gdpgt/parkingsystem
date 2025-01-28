@@ -11,6 +11,7 @@ import com.parkit.parkingsystem.util.InputReaderUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,6 +20,7 @@ import java.io.PrintStream;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,13 +41,24 @@ class ParkingServiceTest {
     @Mock
     private static FareCalculatorService fareCalculatorService;
 
+    private String vehicleRegNumber; 
+    private ArgumentCaptor<String> vehicleRegCaptor;
+    private ArgumentCaptor<Ticket> ticketCaptor;
+    private boolean isDiscounted;
+
 
     @BeforeEach
     public void setUpPerTest() {
         try {
-            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+            vehicleRegNumber = "ABCDEF";
+            vehicleRegCaptor = ArgumentCaptor.forClass(String.class);
+            ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
+            isDiscounted = false;
+
+            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
             when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
             when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
+
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         } catch (Exception e) {
             e.printStackTrace();
@@ -62,6 +75,7 @@ class ParkingServiceTest {
         when(ticketDAO.getNbTickets(anyString())).thenReturn(1);
         doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class));
 
+
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
@@ -69,9 +83,17 @@ class ParkingServiceTest {
             parkingService.processExitingVehicle();
 
             verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
-            verify(ticketDAO, times(1)).getTicket(any(String.class));
+
+            verify(ticketDAO, times(1)).getTicket(vehicleRegCaptor.capture());
+            assertEquals(vehicleRegNumber, vehicleRegCaptor.getValue());
+            
+            assertNotNull(ticket.getOutTime());
+            assertTrue(Math.abs(ticket.getOutTime().getTime() - System.currentTimeMillis()) < 1000);
             verify(ticketDAO, times(1)).getNbTickets(any(String.class));
-            verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class));
+
+            verify(fareCalculatorService, times(1)).calculateFare(ticketCaptor.capture());
+            assertEquals(ticket, ticketCaptor.getValue());
+
             verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
             assertEquals(parkingSpot, ticket.getParkingSpot());
             assertTrue(parkingSpot.isAvailable());
@@ -127,7 +149,7 @@ class ParkingServiceTest {
         Ticket ticket = new Ticket();
         ticket.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1h en arrière
         ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
-        ticket.setVehicleRegNumber("ABCDEF");
+        ticket.setVehicleRegNumber(vehicleRegNumber);
         ticket.setPrice(price);
         return ticket;
     }   

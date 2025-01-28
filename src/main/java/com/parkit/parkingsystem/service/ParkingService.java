@@ -110,10 +110,9 @@ public class ParkingService {
             Ticket existingTicket = ticketDAO.getTicket(vehicleRegNumber);
             Date outTime = new Date();
             existingTicket.setOutTime(outTime);
-            boolean isDiscounted = false;
+            boolean isDiscounted = ticketDAO.getNbTickets(vehicleRegNumber) > 1;
 
-            if (ticketDAO.getNbTickets(vehicleRegNumber) > 1) {
-                isDiscounted = true;
+            if (isDiscounted) {
                 fareCalculatorService.calculateFare(existingTicket, isDiscounted);
             } else {
                 fareCalculatorService.calculateFare(existingTicket);
