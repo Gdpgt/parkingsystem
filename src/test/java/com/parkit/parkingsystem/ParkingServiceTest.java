@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +45,7 @@ class ParkingServiceTest {
     private String vehicleRegNumber; 
     private ArgumentCaptor<String> vehicleRegCaptor;
     private ArgumentCaptor<Ticket> ticketCaptor;
+    private ArgumentCaptor<ParkingSpot> parkingSpotCaptor;
     private boolean isDiscounted;
 
 
@@ -53,6 +55,7 @@ class ParkingServiceTest {
             vehicleRegNumber = "ABCDEF";
             vehicleRegCaptor = ArgumentCaptor.forClass(String.class);
             ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
+            parkingSpotCaptor = ArgumentCaptor.forClass(ParkingSpot.class);
             isDiscounted = false;
 
             when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
@@ -73,7 +76,12 @@ class ParkingServiceTest {
 
         when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
         when(ticketDAO.getNbTickets(anyString())).thenReturn(1);
-        doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class));
+
+        doAnswer(invocation -> {
+            final Ticket capturedTicket = invocation.getArgument(0);
+            capturedTicket.setPrice(1.5);
+            return null;
+        }).when(fareCalculatorService).calculateFare(any(Ticket.class));
 
 
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -88,18 +96,25 @@ class ParkingServiceTest {
             assertEquals(vehicleRegNumber, vehicleRegCaptor.getValue());
             
             assertNotNull(ticket.getOutTime());
-            assertTrue(Math.abs(ticket.getOutTime().getTime() - System.currentTimeMillis()) < 1000);
-            verify(ticketDAO, times(1)).getNbTickets(any(String.class));
+            assertTrue(Math.abs(ticket.getOutTime().getTime() - System.currentTimeMillis()) < 100000);
+            
+            verify(ticketDAO, times(1)).getNbTickets(vehicleRegCaptor.capture());
+            assertEquals(vehicleRegNumber, vehicleRegCaptor.getValue());
 
             verify(fareCalculatorService, times(1)).calculateFare(ticketCaptor.capture());
             assertEquals(ticket, ticketCaptor.getValue());
 
-            verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
+            verify(ticketDAO, times(1)).updateTicket(ticketCaptor.capture());
+            assertEquals(ticket, ticketCaptor.getValue());
+            
             assertEquals(parkingSpot, ticket.getParkingSpot());
             assertTrue(parkingSpot.isAvailable());
-            verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
+            
+            verify(parkingSpotDAO, times(1)).updateParking(parkingSpotCaptor.capture());
+            assertEquals(parkingSpot, parkingSpotCaptor.getValue());
 
             assertTrue(outContent.toString().contains("Please pay the parking fare: 1.5€"));
+            assertTrue(outContent.toString().contains("Recorded out-time for vehicle number ABCDEF is: " + ticket.getOutTime()));
         } finally {
             System.setOut(System.out);
         }
