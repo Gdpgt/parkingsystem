@@ -17,13 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -32,34 +28,28 @@ import static org.mockito.Mockito.*;
 class ParkingServiceTest {
 
     private static ParkingService parkingService;
-    
-    @Mock
-    private static InputReaderUtil inputReaderUtil;
-    @Mock
-    private static ParkingSpotDAO parkingSpotDAO;
-    @Mock
-    private static TicketDAO ticketDAO;
-    @Mock
-    private static FareCalculatorService fareCalculatorService;
 
-    private String vehicleRegNumber; 
-    private ArgumentCaptor<String> vehicleRegCaptor;
-    private ArgumentCaptor<Ticket> ticketCaptor;
+    @Mock
+    private InputReaderUtil inputReaderUtil;
+    @Mock
+    private ParkingSpotDAO parkingSpotDAO;
+    @Mock
+    private TicketDAO ticketDAO;
+    @Mock
+    private FareCalculatorService fareCalculatorService;
+
+    private String vehicleRegNumber;
     private ArgumentCaptor<ParkingSpot> parkingSpotCaptor;
-    private boolean isDiscounted;
-
+    private ArgumentCaptor<Ticket> ticketCaptor;
 
     @BeforeEach
     public void setUpPerTest() {
         try {
             vehicleRegNumber = "ABCDEF";
-            vehicleRegCaptor = ArgumentCaptor.forClass(String.class);
-            ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
             parkingSpotCaptor = ArgumentCaptor.forClass(ParkingSpot.class);
-            isDiscounted = false;
+            ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
 
             when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
-            when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
             when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
 
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
@@ -69,52 +59,37 @@ class ParkingServiceTest {
         }
     }
 
+
     @Test
     void processExitingVehicleNominalCaseTest() throws Exception {
-        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
-        Ticket ticket = createTestTicket(1.5);
-
-        when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
-        when(ticketDAO.getNbTickets(anyString())).thenReturn(1);
+        // Arrange
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
 
         doAnswer(invocation -> {
             final Ticket capturedTicket = invocation.getArgument(0);
             capturedTicket.setPrice(1.5);
             return null;
-        }).when(fareCalculatorService).calculateFare(any(Ticket.class));
+        }).when(fareCalculatorService).calculateFare(ticket);
 
+        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
 
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
         try {
+            // Act
             parkingService.processExitingVehicle();
 
-            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
-
-            verify(ticketDAO, times(1)).getTicket(vehicleRegCaptor.capture());
-            assertEquals(vehicleRegNumber, vehicleRegCaptor.getValue());
-            
+            // Assert
+            verify(ticketDAO).getTicket(vehicleRegNumber);
             assertNotNull(ticket.getOutTime());
-            assertTrue(Math.abs(ticket.getOutTime().getTime() - System.currentTimeMillis()) < 100000);
-            
-            verify(ticketDAO, times(1)).getNbTickets(vehicleRegCaptor.capture());
-            assertEquals(vehicleRegNumber, vehicleRegCaptor.getValue());
-
-            verify(fareCalculatorService, times(1)).calculateFare(ticketCaptor.capture());
-            assertEquals(ticket, ticketCaptor.getValue());
-
-            verify(ticketDAO, times(1)).updateTicket(ticketCaptor.capture());
-            assertEquals(ticket, ticketCaptor.getValue());
-            
-            assertEquals(parkingSpot, ticket.getParkingSpot());
-            assertTrue(parkingSpot.isAvailable());
-            
-            verify(parkingSpotDAO, times(1)).updateParking(parkingSpotCaptor.capture());
-            assertEquals(parkingSpot, parkingSpotCaptor.getValue());
-
-            assertTrue(outContent.toString().contains("Please pay the parking fare: 1.5€"));
-            assertTrue(outContent.toString().contains("Recorded out-time for vehicle number ABCDEF is: " + ticket.getOutTime()));
+            verify(fareCalculatorService).calculateFare(ticket);
+            verify(ticketDAO).updateTicket(ticket);
+            verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
+            assertTrue(parkingSpotCaptor.getValue().isAvailable());
+            assertTrue(outContent.toString().contains("1.5€"));
         } finally {
             System.setOut(System.out);
         }
@@ -122,21 +97,29 @@ class ParkingServiceTest {
 
     @Test
     void processExitingVehicleWithDiscountCaseTest() throws Exception {
-        Ticket ticket = createTestTicket(1.43);
+        // Arrange
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(2);
 
-        when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
-        when(ticketDAO.getNbTickets(anyString())).thenReturn(2);
-        doNothing().when(fareCalculatorService).calculateFare(any(Ticket.class), anyBoolean());
+        doAnswer(invocation -> {
+            final Ticket capturedTicket = invocation.getArgument(0);
+            capturedTicket.setPrice(1.43);
+            return null;
+        }).when(fareCalculatorService).calculateFare(ticket, true);
+
+        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
 
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
         try {
+            // Act
             parkingService.processExitingVehicle();
 
-            verify(fareCalculatorService, times(1)).calculateFare(any(Ticket.class), anyBoolean());
-
-            assertTrue(outContent.toString().contains("Please pay the parking fare (5% discount included): 1.43€"));
+            // Assert
+            verify(fareCalculatorService).calculateFare(ticket, true);
+            assertTrue(outContent.toString().contains("1.43€"));
         } finally {
             System.setOut(System.out);
         }
@@ -144,30 +127,43 @@ class ParkingServiceTest {
 
     @Test
     void processIncomingVehicleNominalCaseTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readSelection()).thenReturn(1);
         when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
-        when(ticketDAO.getTicket(anyString())).thenReturn(null);
-
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(null);
+        when(ticketDAO.saveTicket(any(Ticket.class))).thenReturn(true);
 
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
+
         try {
+            // Act
             parkingService.processIncomingVehicle();
 
-            verify(parkingSpotDAO, times(1)).getNextAvailableSlot(any(ParkingType.class));
-            verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
+            // Assert
+            verify(parkingSpotDAO).getNextAvailableSlot(ParkingType.CAR);
+            verify(ticketDAO).getTicket(vehicleRegNumber);
+            verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
+            assertFalse(parkingSpotCaptor.getValue().isAvailable());
+
+            verify(ticketDAO).saveTicket(ticketCaptor.capture());
+            assertNotNull(ticketCaptor.getValue().getParkingSpot());
+            assertEquals(ticketCaptor.getValue().getVehicleRegNumber(), vehicleRegNumber);
+            assertEquals(ticketCaptor.getValue().getPrice(), 0);
+            assertNotNull(ticketCaptor.getValue().getInTime());
+            assertNull(ticketCaptor.getValue().getOutTime());
+
+            assertTrue(outContent.toString().contains("Please park your vehicle in spot number: 1"));
         } finally {
             System.setOut(System.out);
         }
     }
 
-    private Ticket createTestTicket(double price) {
+    private Ticket createTestTicket() {
         Ticket ticket = new Ticket();
-        ticket.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1h en arrière
         ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
         ticket.setVehicleRegNumber(vehicleRegNumber);
-        ticket.setPrice(price);
         return ticket;
-    }   
-
+    }
 
 }

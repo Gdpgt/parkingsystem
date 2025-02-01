@@ -52,8 +52,8 @@ public class ParkingService {
                 }
 
                 System.out.println("Generated Ticket and saved in DB\n");
-                System.out.println("Please park your vehicle in spot number:"+parkingSpot.getId());
-                System.out.println("\nRecorded in-time for vehicle number:" + vehicleRegNumber+" is:" + inTime + '\n');
+                System.out.println("Please park your vehicle in spot number: "+parkingSpot.getId());
+                System.out.println("\nRecorded in-time for vehicle number: " + vehicleRegNumber+" is: " + inTime + '\n');
             }
 
         }catch(Exception e){
@@ -130,7 +130,7 @@ public class ParkingService {
         }catch(Exception e){
             logger.error("Unable to process exiting vehicle",e);
         }
-}
+    }
 
     private void displayExitMessage(Ticket ticket, boolean isDiscounted) {
         if (ticket.getPrice() == 0.0) {
