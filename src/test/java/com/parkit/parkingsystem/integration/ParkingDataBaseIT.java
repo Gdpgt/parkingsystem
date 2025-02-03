@@ -47,14 +47,18 @@ public class ParkingDataBaseIT {
 
     @AfterAll
     public static void tearDown(){
-
+        parkingSpotDAO = null;
+        ticketDAO = null;
+        dataBasePrepareService = null;
+        fareCalculatorService = null;
+        inputReaderUtil = null;
     }
 
     @Test
     public void testParkingACar(){
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         parkingService.processIncomingVehicle();
-        //TODO: check that a ticket is actualy saved in DB and Parking table is updated with availability
+        //TODO: check that a ticket is actually saved in DB and Parking table is updated with availability
     }
 
     @Test
