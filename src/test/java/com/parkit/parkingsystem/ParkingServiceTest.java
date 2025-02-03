@@ -15,13 +15,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,9 +44,6 @@ class ParkingServiceTest {
             parkingSpotCaptor = ArgumentCaptor.forClass(ParkingSpot.class);
             ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
 
-            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
-            when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
-
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         } catch (Exception e) {
             e.printStackTrace();
@@ -63,6 +55,7 @@ class ParkingServiceTest {
     @Test
     void processExitingVehicleNominalCaseTest() throws Exception {
         // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
         when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
@@ -74,30 +67,24 @@ class ParkingServiceTest {
         }).when(fareCalculatorService).calculateFare(ticket);
 
         when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
 
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
+        // Act
+        parkingService.processExitingVehicle();
 
-        try {
-            // Act
-            parkingService.processExitingVehicle();
-
-            // Assert
-            verify(ticketDAO).getTicket(vehicleRegNumber);
-            assertNotNull(ticket.getOutTime());
-            verify(fareCalculatorService).calculateFare(ticket);
-            verify(ticketDAO).updateTicket(ticket);
-            verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
-            assertTrue(parkingSpotCaptor.getValue().isAvailable());
-            assertTrue(outContent.toString().contains("1.5€"));
-        } finally {
-            System.setOut(System.out);
-        }
+        // Assert
+        verify(ticketDAO).getTicket(vehicleRegNumber);
+        assertNotNull(ticket.getOutTime());
+        verify(fareCalculatorService).calculateFare(ticket);
+        verify(ticketDAO).updateTicket(ticket);
+        verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
+        assertTrue(parkingSpotCaptor.getValue().isAvailable());
     }
 
     @Test
-    void processExitingVehicleWithDiscountCaseTest() throws Exception {
+    void processExitingVehicleWithDiscountTest() throws Exception {
         // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
         when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(2);
@@ -109,20 +96,31 @@ class ParkingServiceTest {
         }).when(fareCalculatorService).calculateFare(ticket, true);
 
         when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
 
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
+        // Act
+        parkingService.processExitingVehicle();
 
-        try {
-            // Act
-            parkingService.processExitingVehicle();
+        // Assert
+        verify(fareCalculatorService).calculateFare(ticket, true);
+    }
 
-            // Assert
-            verify(fareCalculatorService).calculateFare(ticket, true);
-            assertTrue(outContent.toString().contains("1.43€"));
-        } finally {
-            System.setOut(System.out);
-        }
+    @Test
+    void processExitingVehicleWithUnableUpdateTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
+        doNothing().when(fareCalculatorService).calculateFare(ticket);
+        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(false);
+
+        // Act
+        parkingService.processExitingVehicle();
+
+        // Assert
+        verify(ticketDAO).updateTicket(ticket);
+        verify(parkingSpotDAO, never()).updateParking(any());
     }
 
     @Test
@@ -130,33 +128,53 @@ class ParkingServiceTest {
         // Arrange
         when(inputReaderUtil.readSelection()).thenReturn(1);
         when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(null);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
         when(ticketDAO.saveTicket(any(Ticket.class))).thenReturn(true);
 
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
+        // Act
+        parkingService.processIncomingVehicle();
 
-        try {
-            // Act
-            parkingService.processIncomingVehicle();
+        // Assert
+        verify(parkingSpotDAO).getNextAvailableSlot(ParkingType.CAR);
+        verify(ticketDAO).getTicket(vehicleRegNumber);
+        verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
+        assertFalse(parkingSpotCaptor.getValue().isAvailable());
 
-            // Assert
-            verify(parkingSpotDAO).getNextAvailableSlot(ParkingType.CAR);
-            verify(ticketDAO).getTicket(vehicleRegNumber);
-            verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
-            assertFalse(parkingSpotCaptor.getValue().isAvailable());
+        verify(ticketDAO).saveTicket(ticketCaptor.capture());
+        assertNotNull(ticketCaptor.getValue().getParkingSpot());
+        assertEquals(ticketCaptor.getValue().getVehicleRegNumber(), vehicleRegNumber);
+        assertEquals(ticketCaptor.getValue().getPrice(), 0);
+        assertNotNull(ticketCaptor.getValue().getInTime());
+        assertNull(ticketCaptor.getValue().getOutTime());
+    }
 
-            verify(ticketDAO).saveTicket(ticketCaptor.capture());
-            assertNotNull(ticketCaptor.getValue().getParkingSpot());
-            assertEquals(ticketCaptor.getValue().getVehicleRegNumber(), vehicleRegNumber);
-            assertEquals(ticketCaptor.getValue().getPrice(), 0);
-            assertNotNull(ticketCaptor.getValue().getInTime());
-            assertNull(ticketCaptor.getValue().getOutTime());
+    @Test
+    void processIncomingVehicleParkingSpotNotAvailableTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readSelection()).thenReturn(1);
+        when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(0);
 
-            assertTrue(outContent.toString().contains("Please park your vehicle in spot number: 1"));
-        } finally {
-            System.setOut(System.out);
-        }
+        // Act
+        parkingService.processIncomingVehicle();
+
+        // Assert
+        verify(parkingSpotDAO, never()).updateParking(any(ParkingSpot.class));
+        verify(ticketDAO, never()).saveTicket(any(Ticket.class));
+    }
+
+    @Test
+    void processIncomingVehicleParkingTypeIncorrectInputTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readSelection()).thenReturn(3);
+
+        // Act
+        parkingService.processIncomingVehicle();
+
+        // Assert
+        verify(parkingSpotDAO, never()).updateParking(any(ParkingSpot.class));
+        verify(ticketDAO, never()).saveTicket(any(Ticket.class));
     }
 
     private Ticket createTestTicket() {

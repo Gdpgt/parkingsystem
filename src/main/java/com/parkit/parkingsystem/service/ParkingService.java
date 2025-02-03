@@ -66,7 +66,7 @@ public class ParkingService {
         return inputReaderUtil.readVehicleRegistrationNumber();
     }
 
-    public ParkingSpot getNextParkingNumberIfAvailable(){
+    private ParkingSpot getNextParkingNumberIfAvailable(){
         int parkingNumber=0;
         ParkingSpot parkingSpot = null;
         try{
@@ -90,18 +90,14 @@ public class ParkingService {
         System.out.println("1 CAR");
         System.out.println("2 BIKE\n");
         int input = inputReaderUtil.readSelection();
-        switch(input){
-            case 1: {
-                return ParkingType.CAR;
-            }
-            case 2: {
-                return ParkingType.BIKE;
-            }
-            default: {
+        return switch (input) {
+            case 1 -> ParkingType.CAR;
+            case 2 -> ParkingType.BIKE;
+            default -> {
                 System.out.println("Incorrect input provided");
                 throw new IllegalArgumentException("Entered input is invalid");
             }
-        }
+        };
     }
 
     public void processExitingVehicle() {
