@@ -114,7 +114,7 @@ public class ParkingService {
                 fareCalculatorService.calculateFare(existingTicket);
             }
 
-            if(ticketDAO.updateTicket(existingTicket)) {
+            if(ticketDAO.updateExitTicket(existingTicket)) {
                 ParkingSpot parkingSpot = existingTicket.getParkingSpot();
                 parkingSpot.setAvailable(true);
                 parkingSpotDAO.updateParking(parkingSpot);
