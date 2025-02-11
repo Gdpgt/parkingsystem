@@ -53,77 +53,6 @@ class ParkingServiceTest {
 
 
     @Test
-    void processExitingVehicleNominalCaseTest() throws Exception {
-        // Arrange
-        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
-        Ticket ticket = createTestTicket();
-        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
-
-        doAnswer(invocation -> {
-            final Ticket capturedTicket = invocation.getArgument(0);
-            capturedTicket.setPrice(1.5);
-            return null;
-        }).when(fareCalculatorService).calculateFare(ticket);
-
-        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
-        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
-
-        // Act
-        parkingService.processExitingVehicle();
-
-        // Assert
-        verify(ticketDAO).getTicket(vehicleRegNumber);
-        assertNotNull(ticket.getOutTime());
-        verify(fareCalculatorService).calculateFare(ticket);
-        verify(ticketDAO).updateTicket(ticket);
-        verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
-        assertTrue(parkingSpotCaptor.getValue().isAvailable());
-    }
-
-    @Test
-    void processExitingVehicleWithDiscountTest() throws Exception {
-        // Arrange
-        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
-        Ticket ticket = createTestTicket();
-        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(2);
-
-        doAnswer(invocation -> {
-            final Ticket capturedTicket = invocation.getArgument(0);
-            capturedTicket.setPrice(1.43);
-            return null;
-        }).when(fareCalculatorService).calculateFare(ticket, true);
-
-        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
-        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
-
-        // Act
-        parkingService.processExitingVehicle();
-
-        // Assert
-        verify(fareCalculatorService).calculateFare(ticket, true);
-    }
-
-    @Test
-    void processExitingVehicleWithUnableUpdateTest() throws Exception {
-        // Arrange
-        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
-        Ticket ticket = createTestTicket();
-        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
-        doNothing().when(fareCalculatorService).calculateFare(ticket);
-        when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(false);
-
-        // Act
-        parkingService.processExitingVehicle();
-
-        // Assert
-        verify(ticketDAO).updateTicket(ticket);
-        verify(parkingSpotDAO, never()).updateParking(any());
-    }
-
-    @Test
     void processIncomingVehicleNominalCaseTest() throws Exception {
         // Arrange
         when(inputReaderUtil.readSelection()).thenReturn(1);
@@ -175,6 +104,77 @@ class ParkingServiceTest {
         // Assert
         verify(parkingSpotDAO, never()).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, never()).saveTicket(any(Ticket.class));
+    }
+
+    @Test
+    void processExitingVehicleNominalCaseTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
+
+        doAnswer(invocation -> {
+            final Ticket capturedTicket = invocation.getArgument(0);
+            capturedTicket.setPrice(1.5);
+            return null;
+        }).when(fareCalculatorService).calculateFare(ticket);
+
+        when(ticketDAO.updateExitTicket(any(Ticket.class))).thenReturn(true);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
+
+        // Act
+        parkingService.processExitingVehicle();
+
+        // Assert
+        verify(ticketDAO).getTicket(vehicleRegNumber);
+        assertNotNull(ticket.getOutTime());
+        verify(fareCalculatorService).calculateFare(ticket);
+        verify(ticketDAO).updateExitTicket(ticket);
+        verify(parkingSpotDAO).updateParking(parkingSpotCaptor.capture());
+        assertTrue(parkingSpotCaptor.getValue().isAvailable());
+    }
+
+    @Test
+    void processExitingVehicleWithDiscountTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(2);
+
+        doAnswer(invocation -> {
+            final Ticket capturedTicket = invocation.getArgument(0);
+            capturedTicket.setPrice(1.43);
+            return null;
+        }).when(fareCalculatorService).calculateFare(ticket, true);
+
+        when(ticketDAO.updateExitTicket(any(Ticket.class))).thenReturn(true);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
+
+        // Act
+        parkingService.processExitingVehicle();
+
+        // Assert
+        verify(fareCalculatorService).calculateFare(ticket, true);
+    }
+
+    @Test
+    void processExitingVehicleWithUnableUpdateTest() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
+        Ticket ticket = createTestTicket();
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
+        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
+        doNothing().when(fareCalculatorService).calculateFare(ticket);
+        when(ticketDAO.updateExitTicket(any(Ticket.class))).thenReturn(false);
+
+        // Act
+        parkingService.processExitingVehicle();
+
+        // Assert
+        verify(ticketDAO).updateExitTicket(ticket);
+        verify(parkingSpotDAO, never()).updateParking(any());
     }
 
     private Ticket createTestTicket() {

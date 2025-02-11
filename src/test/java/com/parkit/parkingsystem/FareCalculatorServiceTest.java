@@ -55,7 +55,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareUnknownType(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (  60L * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() - (60L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, null,false);
 
@@ -68,7 +68,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareBikeWithFutureInTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() + (  60L * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() + (60L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(4, ParkingType.BIKE,false);
 
@@ -81,7 +81,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareBikeWithLessThanOneHourParkingTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (  45L * 60 * 1000) );//45 minutes parking time should give 3/4th parking fare
+        inTime.setTime(System.currentTimeMillis() - (45L * 60 * 1000));//45 minutes parking time should give 3/4th parking fare
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(4, ParkingType.BIKE,false);
 
@@ -95,7 +95,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareCarWithLessThanOneHourParkingTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (  45L * 60 * 1000) );//45 minutes parking time should give 3/4th parking fare
+        inTime.setTime(System.currentTimeMillis() - (45L * 60 * 1000));//45 minutes parking time should give 3/4th parking fare
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
 
@@ -109,7 +109,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareCarWithMoreThanADayParkingTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (  25L * 60 * 60 * 1000) );//25 hours parking time should give 25 * parking fare per hour
+        inTime.setTime(System.currentTimeMillis() - (25L * 60 * 60 * 1000));//25 hours parking time should give 25 * parking fare per hour
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR,false);
 
@@ -123,7 +123,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareCarWithLessThan30minutesParkingTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (25L * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() - (25L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
 
@@ -137,7 +137,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareBikeWithLessThan30minutesParkingTime(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (25L * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() - (25L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(4, ParkingType.BIKE, false);
 
@@ -151,7 +151,7 @@ class FareCalculatorServiceTest {
     @Test
         void calculateFareCarWithDiscount(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (45 * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() - (45L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
 
@@ -165,7 +165,7 @@ class FareCalculatorServiceTest {
     @Test
     void calculateFareBikeWithDiscount(){
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - (45 * 60 * 1000) );
+        inTime.setTime(System.currentTimeMillis() - (45L * 60 * 1000));
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.BIKE, false);
 
