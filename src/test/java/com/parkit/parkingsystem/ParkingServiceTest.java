@@ -177,6 +177,21 @@ class ParkingServiceTest {
         verify(parkingSpotDAO, never()).updateParking(any());
     }
 
+    @Test
+    void processExitingVehicleWhenNoTicketFound() throws Exception {
+        // Arrange
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
+        when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(null);
+
+        // Act
+        parkingService.processExitingVehicle();
+
+        // Assert
+        verify(fareCalculatorService, never()).calculateFare(any());
+        verify(ticketDAO, never()).updateExitTicket(any());
+        verify(parkingSpotDAO, never()).updateParking(any());
+    }
+
     private Ticket createTestTicket() {
         Ticket ticket = new Ticket();
         ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));

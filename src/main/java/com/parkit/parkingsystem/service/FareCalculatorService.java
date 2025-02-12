@@ -23,7 +23,7 @@ public class FareCalculatorService {
         long durationInMillis = outTimeMillis - inTimeMillis;
         double durationInHours = durationInMillis / (1000.0 * 60 * 60);
 
-        if(durationInHours < 0.5) {
+        if(durationInHours <= 0.5) {
             ticket.setPrice(0.0);
         }else {
             double ratePerHour = switch (ticket.getParkingSpot().getParkingType()) {
