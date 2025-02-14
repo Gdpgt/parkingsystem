@@ -47,7 +47,7 @@ class ParkingServiceTest {
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         } catch (Exception e) {
             e.printStackTrace();
-            throw  new RuntimeException("Failed to set up test mock objects");
+            throw  new IllegalStateException("Failed to set up test mock objects");
         }
     }
 
@@ -160,7 +160,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWithUnableUpdateTest() throws Exception {
+    void processExitingVehicleWithUnableUpdateTicketTest() throws Exception {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();

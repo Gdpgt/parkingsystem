@@ -102,7 +102,7 @@ public class TicketDAO {
         }
     }
 
-    public boolean updateExitTicketForTest(Ticket ticket) {
+    public void updateExitTicketForTest(Ticket ticket) {
         try (
                 Connection con = dataBaseConfig.getConnection();
                 PreparedStatement ps = con.prepareStatement(DBConstants.UPDATE_TICKET_FOR_TEST)
@@ -110,10 +110,9 @@ public class TicketDAO {
             ps.setTimestamp(1, new Timestamp(ticket.getInTime().getTime()));
             ps.setInt(2,ticket.getId());
 
-            return ps.executeUpdate() > 0;
+            ps.executeUpdate();
         } catch (Exception ex) {
             logger.error("Error updating ticket", ex);
-            return false;
         }
     }
 

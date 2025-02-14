@@ -1,7 +1,6 @@
 package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.util.InputReaderUtil;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.util.Scanner;
@@ -12,24 +11,47 @@ class InputReaderUtilTest {
 
     private InputReaderUtil inputReaderUtil;
 
-    @BeforeEach
-    void setUp() {
-        // Scanner mocké avec une entrée simulée
-        Scanner testScanner = new Scanner(new ByteArrayInputStream("invalid\n".getBytes()));
-        inputReaderUtil = new InputReaderUtil(testScanner);
-    }
-
     @Test
-    void readSelection_shouldReturnNegativeOne_whenInputIsInvalid() {
+    void readSelectionValidInput() {
+        // Arrange
+        Scanner validScanner = new Scanner(new ByteArrayInputStream("2\n".getBytes()));
+        inputReaderUtil = new InputReaderUtil(validScanner);
+
         // Act
         int result = inputReaderUtil.readSelection();
 
         // Assert
-        assertEquals(-1, result, "Si l'entrée est invalide, readSelection() doit retourner -1.");
+        assertEquals(2, result);
     }
 
     @Test
-    void readVehicleRegistrationNumber_shouldThrowException_whenInputIsEmpty() {
+    void readSelectionInvalidInput() {
+        // Arrange
+        Scanner validScanner = new Scanner(new ByteArrayInputStream("invalid\n".getBytes()));
+        inputReaderUtil = new InputReaderUtil(validScanner);
+
+        // Act
+        int result = inputReaderUtil.readSelection();
+
+        // Assert
+        assertEquals(-1, result);
+    }
+
+    @Test
+    void readVehicleRegistrationNumberValidInput() throws Exception {
+        // Arrange
+        Scanner validScanner = new Scanner(new ByteArrayInputStream("ABCDEF\n".getBytes()));
+        inputReaderUtil = new InputReaderUtil(validScanner);
+
+        // Act
+        String result = inputReaderUtil.readVehicleRegistrationNumber();
+
+        // Assert
+        assertEquals("ABCDEF", result);
+    }
+
+    @Test
+    void readVehicleRegistrationNumberEmptyInput() {
         // Arrange
         Scanner emptyScanner = new Scanner(new ByteArrayInputStream("\n".getBytes()));
         inputReaderUtil = new InputReaderUtil(emptyScanner);

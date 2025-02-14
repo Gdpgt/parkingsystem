@@ -44,8 +44,8 @@ class TicketDAOTest {
         testTicket = new Ticket();
         testTicket.setId(1);
         testTicket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
-        testTicket.setVehicleRegNumber("ABC123");
-        testTicket.setPrice(10.0);
+        testTicket.setVehicleRegNumber("ABCDEF");
+        testTicket.setPrice(1.5);
         testTicket.setInTime(new Date());
         testTicket.setOutTime(new Date());
 
@@ -54,7 +54,70 @@ class TicketDAOTest {
     }
 
     @Test
-    void getTicket_shouldReturnNull_whenVehicleNotFound() throws Exception {
+    void saveTicketWhenInsertSucceeds() throws Exception {
+        // Arrange
+        when(preparedStatement.executeUpdate()).thenReturn(1);
+
+        // Act
+        boolean result = ticketDAO.saveTicket(testTicket);
+
+        // Assert
+        assertTrue(result);
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
+    }
+
+    @Test
+    void saveTicketWhenSQLExceptionOccurs() throws Exception {
+        // Arrange
+        when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
+
+        // Act
+        boolean result = ticketDAO.saveTicket(testTicket);
+
+        // Assert
+        assertFalse(result);
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
+    }
+
+    @Test
+    void getTicketWhenVehicleExists() throws Exception {
+        // Arrange
+        when(preparedStatement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(true);
+        when(resultSet.getInt(1)).thenReturn(1);
+        when(resultSet.getInt(2)).thenReturn(1);
+        when(resultSet.getDouble(3)).thenReturn(1.5);
+        when(resultSet.getTimestamp(4)).thenReturn(new java.sql.Timestamp(testTicket.getInTime().getTime()));
+        when(resultSet.getTimestamp(5)).thenReturn(new java.sql.Timestamp(testTicket.getOutTime().getTime()));
+        when(resultSet.getString(6)).thenReturn("CAR");
+
+        // Act
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
+
+        // Assert
+        assertNotNull(ticket);
+        assertEquals("ABCDEF", ticket.getVehicleRegNumber());
+        assertEquals(1.5, ticket.getPrice());
+        assertEquals(1, ticket.getParkingSpot().getId());
+        assertEquals(ParkingType.CAR, ticket.getParkingSpot().getParkingType());
+        assertEquals(testTicket.getInTime().getTime(), ticket.getInTime().getTime(), 1000);
+        assertEquals(testTicket.getOutTime().getTime(), ticket.getOutTime().getTime(), 1000);
+
+
+        verify(preparedStatement).setString(1, "ABCDEF");
+        verify(preparedStatement).executeQuery();
+        verify(resultSet).next();
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
+    }
+
+    @Test
+    void getTicketWhenVehicleNotFound() throws Exception {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(false);
@@ -65,23 +128,30 @@ class TicketDAOTest {
         // Assert
         assertNull(ticket);
         verify(preparedStatement).setString(1, "UNKNOWN_CAR");
+        verify(preparedStatement).executeQuery();
+        verify(resultSet).next();
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void saveTicket_shouldReturnFalse_whenSQLExceptionOccurs() throws Exception {
+    void updateExitTicketWhenUpdateSucceeds() throws Exception {
         // Arrange
-        when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
+        when(preparedStatement.executeUpdate()).thenReturn(1);
 
         // Act
-        boolean result = ticketDAO.saveTicket(testTicket);
+        boolean result = ticketDAO.updateExitTicket(testTicket);
 
         // Assert
-        assertFalse(result);
-        verify(preparedStatement, times(1)).executeUpdate();
+        assertTrue(result);
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void updateExitTicket_shouldReturnFalse_whenSQLExceptionOccurs() throws Exception {
+    void updateExitTicketWhenSQLExceptionOccurs() throws Exception {
         // Arrange
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
@@ -90,6 +160,48 @@ class TicketDAOTest {
 
         // Assert
         assertFalse(result);
-        verify(preparedStatement, times(1)).executeUpdate();
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
+
+    @Test
+    void getNbTicketsWhenTicketsFound() throws Exception {
+        // Arrange
+        when(preparedStatement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(true);
+        when(resultSet.getInt(1)).thenReturn(3);
+
+        // Act
+        int count = ticketDAO.getNbTickets("ABCDEF");
+
+        // Assert
+        assertEquals(3, count);
+        verify(preparedStatement).setString(1, "ABCDEF");
+        verify(preparedStatement).executeQuery();
+        verify(resultSet).next();
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
+    }
+
+    @Test
+    void getNbTicketsWhenNoTicketsFound() throws Exception {
+        // Arrange
+        when(preparedStatement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(false);
+
+        // Act
+        int count = ticketDAO.getNbTickets("ABCDEF");
+
+        // Assert
+        assertEquals(0, count);
+        verify(preparedStatement).setString(1, "ABCDEF");
+        verify(preparedStatement).executeQuery();
+        verify(resultSet).next();
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
+    }
+
 }

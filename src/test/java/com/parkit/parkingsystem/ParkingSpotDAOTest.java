@@ -42,7 +42,7 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void getNextAvailableSlot_shouldReturnParkingNumber_whenSlotAvailable() throws Exception {
+    void getNextAvailableSlotWhenAvailable() throws Exception {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true);
@@ -52,25 +52,38 @@ class ParkingSpotDAOTest {
         int slot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
         // Assert
-        assertEquals(3, slot, "L'ID de la place de parking disponible doit être 3.");
+        assertEquals(3, slot);
+        verify(preparedStatement).executeQuery();
         verify(preparedStatement).setString(1, "CAR");
+        verify(resultSet).next();
+        verify(resultSet).getInt(1);
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void getNextAvailableSlot_shouldReturnNegativeOne_whenNoSlotAvailable() throws Exception {
+    void getNextAvailableSlotWhenNotAvailable() throws Exception {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
-        when(resultSet.next()).thenReturn(false); // Aucun résultat trouvé
+        when(resultSet.next()).thenReturn(false);
 
         // Act
         int slot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
         // Assert
-        assertEquals(-1, slot, "Si aucune place n'est dispo, la méthode doit retourner -1.");
+        assertEquals(-1, slot);
+        verify(preparedStatement).executeQuery();
+        verify(preparedStatement).setString(1, "CAR");
+        verify(resultSet).next();
+        verify(resultSet, never()).getInt(1);
+        verify(resultSet).close();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void updateParking_shouldReturnTrue_whenUpdateSuccessful() throws Exception {
+    void updateParkingWhenSuccessful() throws Exception {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         when(preparedStatement.executeUpdate()).thenReturn(1);
@@ -79,29 +92,42 @@ class ParkingSpotDAOTest {
         boolean result = parkingSpotDAO.updateParking(parkingSpot);
 
         // Assert
-        assertTrue(result, "L'update doit être réussi et retourner true.");
+        assertTrue(result);
+        verify(preparedStatement).setBoolean(1, parkingSpot.isAvailable());
+        verify(preparedStatement).setInt(2, parkingSpot.getId());
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void updateParking_shouldReturnFalse_whenUpdateFails() throws Exception {
+    void updateParkingWhenFailed() throws Exception {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
-        when(preparedStatement.executeUpdate()).thenReturn(0); // Aucun enregistrement mis à jour
+        when(preparedStatement.executeUpdate()).thenReturn(0);
 
         // Act
         boolean result = parkingSpotDAO.updateParking(parkingSpot);
 
         // Assert
-        assertFalse(result, "Si l'update échoue, la méthode doit retourner false.");
+        assertFalse(result);
+        verify(preparedStatement).setBoolean(1, parkingSpot.isAvailable());
+        verify(preparedStatement).setInt(2, parkingSpot.getId());
+        verify(preparedStatement).executeUpdate();
+        verify(preparedStatement).close();
+        verify(connection).close();
     }
 
     @Test
-    void updateParking_shouldThrowException_whenSQLExceptionOccurs() throws Exception {
+    void updateParkingWhenSQLExceptionOccurs() throws Exception {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
         // Act & Assert
-        assertFalse(parkingSpotDAO.updateParking(parkingSpot), "En cas d'erreur SQL, la méthode doit retourner false.");
+        assertFalse(parkingSpotDAO.updateParking(parkingSpot));
+        verify(preparedStatement).setBoolean(1, parkingSpot.isAvailable());
+        verify(preparedStatement).setInt(2, parkingSpot.getId());
+        verify(preparedStatement).executeUpdate();
     }
 }
