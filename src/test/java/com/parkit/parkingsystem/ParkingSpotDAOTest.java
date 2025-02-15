@@ -83,6 +83,23 @@ class ParkingSpotDAOTest {
     }
 
     @Test
+    void getNextAvailableSlotWhenExceptionOccurs() throws Exception {
+        // Arrange
+        when(preparedStatement.executeQuery()).thenThrow(new SQLException("Database error"));
+
+        // Act
+        int slot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
+
+        // Assert
+        assertEquals(-1, slot);
+        verify(preparedStatement).setString(1, "CAR");
+        verify(preparedStatement).executeQuery();
+        verify(resultSet, never()).next();
+        verify(resultSet, never()).getInt(1);
+    }
+
+
+    @Test
     void updateParkingWhenSuccessful() throws Exception {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
@@ -119,7 +136,7 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void updateParkingWhenSQLExceptionOccurs() throws Exception {
+    void updateParkingWhenExceptionOccurs() throws Exception {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
