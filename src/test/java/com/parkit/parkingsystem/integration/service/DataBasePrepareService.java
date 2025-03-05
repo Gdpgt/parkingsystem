@@ -1,28 +1,30 @@
 package com.parkit.parkingsystem.integration.service;
 
 import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class DataBasePrepareService {
 
+    private static final Logger logger = LogManager.getLogger("DataBasePrepareService");
     DataBaseTestConfig dataBaseTestConfig = new DataBaseTestConfig();
 
     public void clearDataBaseEntries(){
-        Connection connection = null;
-        try{
-            connection = dataBaseTestConfig.getConnection();
+        try (Connection connection = dataBaseTestConfig.getConnection();
+             PreparedStatement resetParking = connection.prepareStatement("UPDATE parking SET available = TRUE");
+             PreparedStatement truncateTickets = connection.prepareStatement("TRUNCATE TABLE ticket")) {
 
-            //set parking entries to available
-            connection.prepareStatement("update parking set available = true").execute();
+            resetParking.executeUpdate();
+            truncateTickets.executeUpdate();
 
-            //clear ticket entries;
-            connection.prepareStatement("truncate table ticket").execute();
+            logger.info("Database entries cleared successfully.");
 
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally {
-            dataBaseTestConfig.closeConnection(connection);
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("Error while clearing database entries", e);
         }
     }
 

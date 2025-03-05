@@ -178,7 +178,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWhenNoTicketFound() throws Exception {
+    void processExitingVehicleWhenNoTicketFoundTest() throws Exception {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(null);

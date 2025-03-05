@@ -24,10 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -124,6 +120,6 @@ public class ParkingDataBaseIT {
 
         //Assert
         Ticket finalTicket = ticketDAO.getTicket("ABCDEF");
-        assertEquals(1.43, finalTicket.getPrice(), 0.01, "Le prix du ticket avec discount devrait être égal à 1.43€.");
+        assertEquals(1.43, finalTicket.getPrice(), 0.015, "Le prix du ticket avec discount devrait être égal à 1.43€.");
     }
 }

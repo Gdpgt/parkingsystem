@@ -10,8 +10,17 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <junit.version>5.9.3</junit.version>
+        <mysql.version>8.0.33</mysql.version>
+        <log4j.version>2.21.0</log4j.version>
+        <mockito.version>5.7.0</mockito.version>
+        <jacoco.version>0.8.11</jacoco.version>
+        <maven.surefire.version>3.1.2</maven.surefire.version>
+        <skipTests>false</skipTests>
+        <skipUnitTests>false</skipUnitTests>
+        <maven.assembly.version>3.4.2</maven.assembly.version>
     </properties>
 
     <dependencies>
@@ -99,10 +108,38 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <excludes>
-                        <exclude>**/*IT.java</exclude>
-                    </excludes>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <skipTests>${skipTests}</skipTests>
+                    <skip>${skipUnitTests}</skip>
                 </configuration>
+            </plugin>
+
+            <!-- FailSafe Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <skipTests>${skipTests}</skipTests>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Jacoco Plugin -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
@@ -157,5 +194,36 @@
             </plugin>
         </plugins>
     </build>
+    <reporting>
+        <plugins>
+            <!-- Rapport HTML des tests unitaires -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <reportSets>
+                    <reportSet>
+                        <id>unit-tests</id>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                    <reportSet>
+                        <id>integration-tests</id>
+                        <reports>
+                            <report>failsafe-report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <!-- Plugin pour structurer la documentation du projet -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.12.1</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
 </project>
