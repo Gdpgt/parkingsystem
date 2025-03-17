@@ -3,19 +3,17 @@ package com.parkit.parkingsystem.dao;
 import com.parkit.parkingsystem.config.DataBaseConfig;
 import com.parkit.parkingsystem.constants.DBConstants;
 import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.exceptions.DatabaseException;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class TicketDAO {
-
-    private static final Logger logger = LogManager.getLogger("TicketDAO");
 
     public DataBaseConfig dataBaseConfig = new DataBaseConfig();
 
@@ -34,9 +32,8 @@ public class TicketDAO {
 
             return ps.executeUpdate() > 0;
 
-        }catch (Exception ex){
-            logger.error("Error fetching next available slot",ex);
-            return false;
+        }catch (SQLException ex){
+            throw new DatabaseException("Database error", ex);
         }
     }
 
@@ -61,8 +58,9 @@ public class TicketDAO {
                     ticket.setOutTime(rs.getTimestamp(5));
                 }
             }
-        }catch (Exception ex){
-            logger.error("Error fetching next available slot",ex);
+
+        }catch (SQLException ex){
+            throw new DatabaseException("Database error", ex);
         }
         return ticket;
     }
@@ -77,9 +75,9 @@ public class TicketDAO {
             ps.setInt(3,ticket.getId());
 
             return ps.executeUpdate() > 0;
-        } catch (Exception ex) {
-            logger.error("Error updating ticket", ex);
-            return false;
+
+        }catch (SQLException ex){
+            throw new DatabaseException("Database error", ex);
         }
     }
 
@@ -96,9 +94,8 @@ public class TicketDAO {
                 }
                 return 0;
             }
-        } catch (Exception ex) {
-            logger.error("Error fetching the number of tickets for vehicle: {}", vehicleRegNumber, ex);
-            throw new RuntimeException("Error fetching the number of tickets", ex);
+        }catch (SQLException ex){
+            throw new DatabaseException("Database error", ex);
         }
     }
 
@@ -111,8 +108,9 @@ public class TicketDAO {
             ps.setInt(2,ticket.getId());
 
             ps.executeUpdate();
-        } catch (Exception ex) {
-            logger.error("Error updating ticket", ex);
+            
+        }catch (SQLException ex){
+            throw new DatabaseException("Database error", ex);
         }
     }
 

@@ -30,15 +30,12 @@ class InputReaderUtilTest {
         Scanner validScanner = new Scanner(new ByteArrayInputStream("invalid\n".getBytes()));
         inputReaderUtil = new InputReaderUtil(validScanner);
 
-        // Act
-        int result = inputReaderUtil.readSelection();
-
-        // Assert
-        assertEquals(-1, result);
+        // Act & Assert
+        assertThrows(NumberFormatException.class, inputReaderUtil::readSelection);
     }
 
     @Test
-    void readVehicleRegistrationNumberValidInput() throws Exception {
+    void readVehicleRegistrationNumberValidInput() {
         // Arrange
         Scanner validScanner = new Scanner(new ByteArrayInputStream("ABCDEF\n".getBytes()));
         inputReaderUtil = new InputReaderUtil(validScanner);
@@ -57,7 +54,6 @@ class InputReaderUtilTest {
         inputReaderUtil = new InputReaderUtil(emptyScanner);
 
         // Act & Assert
-        Exception exception = assertThrows(Exception.class, () -> inputReaderUtil.readVehicleRegistrationNumber());
-        assertTrue(exception.getMessage().contains("Invalid input provided"));
+        assertThrows(IllegalArgumentException.class, () -> inputReaderUtil.readVehicleRegistrationNumber());
     }
 }

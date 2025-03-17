@@ -3,17 +3,26 @@ package com.parkit.parkingsystem.config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.parkit.parkingsystem.exceptions.DatabaseException;
+import com.parkit.parkingsystem.exceptions.JDBCDriverNotFoundException;
+
 import java.sql.*;
 
 public class DataBaseConfig {
 
     private static final Logger logger = LogManager.getLogger("DataBaseConfig");
 
-    public Connection getConnection() throws ClassNotFoundException, SQLException {
-        logger.info("Create DB connection");
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/prod","root","rootroot");
+    public Connection getConnection() {
+        try {
+            logger.info("Create DB connection");
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/prod_parkingsystem?serverTimezone=Europe/Paris","root","mysql");
+        } catch (ClassNotFoundException e) { 
+            throw new JDBCDriverNotFoundException("FATAL ERROR: JDBC Driver not found. The application cannot start.", e);
+        } catch (SQLException e) { 
+            throw new DatabaseException("Error while connecting to the database", e);
+        }
     }
 
     public void closeConnection(Connection con){

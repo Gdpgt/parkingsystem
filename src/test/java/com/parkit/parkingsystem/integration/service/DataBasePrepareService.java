@@ -1,5 +1,6 @@
 package com.parkit.parkingsystem.integration.service;
 
+import com.parkit.parkingsystem.exceptions.DatabaseException;
 import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,8 +24,8 @@ public class DataBasePrepareService {
 
             logger.info("Database entries cleared successfully.");
 
-        } catch (SQLException | ClassNotFoundException e) {
-            logger.error("Error while clearing database entries", e);
+        } catch (SQLException ex) { 
+            throw new DatabaseException("Error while clearing the database", ex); 
         }
     }
 

@@ -2,6 +2,7 @@ package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.config.DataBaseConfig;
 import com.parkit.parkingsystem.dao.TicketDAO;
+import com.parkit.parkingsystem.exceptions.DatabaseException;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.constants.ParkingType;
@@ -18,6 +19,7 @@ import java.sql.SQLException;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +39,7 @@ class TicketDAOTest {
     private Ticket testTicket;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() throws SQLException {
         ticketDAO = new TicketDAO();
         ticketDAO.dataBaseConfig = dataBaseConfig;
 
@@ -54,7 +56,7 @@ class TicketDAOTest {
     }
 
     @Test
-    void saveTicketWhenInsertSucceeds() throws Exception {
+    void saveTicketWhenInsertSucceeds() throws SQLException {
         // Arrange
         when(preparedStatement.executeUpdate()).thenReturn(1);
 
@@ -69,22 +71,19 @@ class TicketDAOTest {
     }
 
     @Test
-    void saveTicketWhenSQLExceptionOccurs() throws Exception {
+    void saveTicketWhenSQLExceptionOccurs() throws SQLException {
         // Arrange
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
-        // Act
-        boolean result = ticketDAO.saveTicket(testTicket);
-
-        // Assert
-        assertFalse(result);
+        // Act & assert
+        assertThrows(DatabaseException.class, () -> ticketDAO.saveTicket(testTicket));
         verify(preparedStatement).executeUpdate();
         verify(preparedStatement).close();
         verify(connection).close();
     }
 
     @Test
-    void getTicketWhenVehicleExists() throws Exception {
+    void getTicketWhenVehicleExists() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true);
@@ -117,7 +116,7 @@ class TicketDAOTest {
     }
 
     @Test
-    void getTicketWhenVehicleNotFound() throws Exception {
+    void getTicketWhenVehicleNotFound() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(false);
@@ -136,7 +135,7 @@ class TicketDAOTest {
     }
 
     @Test
-    void updateExitTicketWhenUpdateSucceeds() throws Exception {
+    void updateExitTicketWhenUpdateSucceeds() throws SQLException {
         // Arrange
         when(preparedStatement.executeUpdate()).thenReturn(1);
 
@@ -151,22 +150,19 @@ class TicketDAOTest {
     }
 
     @Test
-    void updateExitTicketWhenSQLExceptionOccurs() throws Exception {
+    void updateExitTicketWhenSQLExceptionOccurs() throws SQLException {
         // Arrange
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
-        // Act
-        boolean result = ticketDAO.updateExitTicket(testTicket);
-
-        // Assert
-        assertFalse(result);
+        // Act & assert
+        assertThrows(DatabaseException.class, () -> ticketDAO.updateExitTicket(testTicket));
         verify(preparedStatement).executeUpdate();
         verify(preparedStatement).close();
         verify(connection).close();
     }
 
     @Test
-    void getNbTicketsWhenTicketsFound() throws Exception {
+    void getNbTicketsWhenTicketsFound() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true);
@@ -186,7 +182,7 @@ class TicketDAOTest {
     }
 
     @Test
-    void getNbTicketsWhenNoTicketsFound() throws Exception {
+    void getNbTicketsWhenNoTicketsFound() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(false);

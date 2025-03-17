@@ -2,6 +2,8 @@ package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.dao.TicketDAO;
+import com.parkit.parkingsystem.exceptions.DatabaseException;
+import com.parkit.parkingsystem.exceptions.NoAvailableSlotException;
 import com.parkit.parkingsystem.util.InputReaderUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,28 +25,48 @@ public class InteractiveShell {
 
         while(continueApp){
             loadMenu();
-            int option = inputReaderUtil.readSelection();
-            switch(option){
-                case 1: {
-                    parkingService.processIncomingVehicle();
-                    break;
-                }
-                case 2: {
-                    parkingService.processExitingVehicle();
-                    break;
-                }
-                case 3: {
-                    System.out.println("Exiting from the system!");
-                    continueApp = false;
-                    break;
-                }
-                default: System.out.println("Unsupported option. Please enter a number corresponding to the provided menu");
+            int option;
+
+            try {
+                option = inputReaderUtil.readSelection();
+            } catch (NumberFormatException e) {
+                System.out.println("\nInvalid input: please enter a valid number.\n");
+                continue;
             }
+
+            switch(option){
+                case 1 -> {
+                    try {
+                        parkingService.processIncomingVehicle();
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("\nInvalid entry: please try again.");
+                    } catch (DatabaseException e) { 
+                        System.out.println("\nAn unexpected error has occurred. We are actively working to resolve the issue.");
+                    } catch (NoAvailableSlotException e) { 
+                        System.out.println("\nSorry, the parking is full for your type of vehicle. Please come back later.");
+                    } catch (RuntimeException e) {
+                        logger.error("\nUnexpected error occurred", e);
+                        System.out.println("\nAn unexpected error has occurred. We are actively working to resolve the issue.");
+                    }
+                }
+                case 2 -> {
+                    try {
+                        parkingService.processExitingVehicle();
+                    } catch (NullPointerException e) {
+                        System.out.println("\nInvalid entry: please try again.");
+                    }
+                }
+                case 3 -> {
+                    System.out.println("\nExiting the system.");
+                    continueApp = false;
+                }
+                default -> System.out.println("\nUnsupported option. Please enter a number corresponding to the menu.");
+            } 
         }
     }
 
     private static void loadMenu(){
-        System.out.println("Please select an option. Simply enter the number to choose an action");
+        System.out.println("\nPlease select an option. Simply enter the number to choose an action");
         System.out.println("1 New Vehicle Entering - Allocate Parking Space");
         System.out.println("2 Vehicle Exiting - Generate Ticket Price");
         System.out.println("3 Shutdown System\n");

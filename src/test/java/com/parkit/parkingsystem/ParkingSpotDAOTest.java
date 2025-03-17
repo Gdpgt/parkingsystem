@@ -3,6 +3,8 @@ package com.parkit.parkingsystem;
 import com.parkit.parkingsystem.config.DataBaseConfig;
 import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
+import com.parkit.parkingsystem.exceptions.DatabaseException;
+import com.parkit.parkingsystem.exceptions.NoAvailableSlotException;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +36,7 @@ class ParkingSpotDAOTest {
     private ResultSet resultSet;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() throws SQLException {
         parkingSpotDAO = new ParkingSpotDAO();
         parkingSpotDAO.dataBaseConfig = dataBaseConfig;
 
@@ -42,7 +45,7 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void getNextAvailableSlotWhenAvailable() throws Exception {
+    void getNextAvailableSlotWhenAvailable() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true);
@@ -63,16 +66,13 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void getNextAvailableSlotWhenNotAvailable() throws Exception {
+    void getNextAvailableSlotWhenNotAvailable() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(false);
 
-        // Act
-        int slot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
-
-        // Assert
-        assertEquals(-1, slot);
+        // Act & assert
+        assertThrows(NoAvailableSlotException.class, () -> parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR));
         verify(preparedStatement).executeQuery();
         verify(preparedStatement).setString(1, "CAR");
         verify(resultSet).next();
@@ -83,15 +83,12 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void getNextAvailableSlotWhenExceptionOccurs() throws Exception {
+    void getNextAvailableSlotWhenProblemWithDatabase() throws SQLException {
         // Arrange
         when(preparedStatement.executeQuery()).thenThrow(new SQLException("Database error"));
 
-        // Act
-        int slot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
-
-        // Assert
-        assertEquals(-1, slot);
+        // Act & assert
+        assertThrows(DatabaseException.class, () -> parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR));
         verify(preparedStatement).setString(1, "CAR");
         verify(preparedStatement).executeQuery();
         verify(resultSet, never()).next();
@@ -100,7 +97,7 @@ class ParkingSpotDAOTest {
 
 
     @Test
-    void updateParkingWhenSuccessful() throws Exception {
+    void updateParkingWhenSuccessful() throws SQLException {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         when(preparedStatement.executeUpdate()).thenReturn(1);
@@ -118,33 +115,16 @@ class ParkingSpotDAOTest {
     }
 
     @Test
-    void updateParkingWhenFailed() throws Exception {
-        // Arrange
-        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
-        when(preparedStatement.executeUpdate()).thenReturn(0);
-
-        // Act
-        boolean result = parkingSpotDAO.updateParking(parkingSpot);
-
-        // Assert
-        assertFalse(result);
-        verify(preparedStatement).setBoolean(1, parkingSpot.isAvailable());
-        verify(preparedStatement).setInt(2, parkingSpot.getId());
-        verify(preparedStatement).executeUpdate();
-        verify(preparedStatement).close();
-        verify(connection).close();
-    }
-
-    @Test
-    void updateParkingWhenExceptionOccurs() throws Exception {
+    void updateParkingWhenProblemWithDatabase() throws SQLException {
         // Arrange
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
         when(preparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
-        // Act & Assert
-        assertFalse(parkingSpotDAO.updateParking(parkingSpot));
+        // Act & assert
+        assertThrows(DatabaseException.class, () -> parkingSpotDAO.updateParking(parkingSpot));
         verify(preparedStatement).setBoolean(1, parkingSpot.isAvailable());
         verify(preparedStatement).setInt(2, parkingSpot.getId());
         verify(preparedStatement).executeUpdate();
     }
+
 }

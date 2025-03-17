@@ -3,6 +3,7 @@ package com.parkit.parkingsystem;
 import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.dao.TicketDAO;
+import com.parkit.parkingsystem.exceptions.NoAvailableSlotException;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
@@ -38,22 +39,17 @@ class ParkingServiceTest {
     private ArgumentCaptor<Ticket> ticketCaptor;
 
     @BeforeEach
-    public void setUpPerTest() {
-        try {
-            vehicleRegNumber = "ABCDEF";
-            parkingSpotCaptor = ArgumentCaptor.forClass(ParkingSpot.class);
-            ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
+    void setUpPerTest() {
+        vehicleRegNumber = "ABCDEF";
+        parkingSpotCaptor = ArgumentCaptor.forClass(ParkingSpot.class);
+        ticketCaptor = ArgumentCaptor.forClass(Ticket.class);
 
-            parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw  new IllegalStateException("Failed to set up test mock objects");
-        }
+        parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
     }
 
 
     @Test
-    void processIncomingVehicleNominalCaseTest() throws Exception {
+    void processIncomingVehicleNominalCaseTest() {
         // Arrange
         when(inputReaderUtil.readSelection()).thenReturn(1);
         when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(1);
@@ -80,34 +76,32 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processIncomingVehicleParkingSpotNotAvailableTest() throws Exception {
+    void processIncomingVehicleParkingSpotNotAvailableTest() {
         // Arrange
         when(inputReaderUtil.readSelection()).thenReturn(1);
-        when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class))).thenReturn(0);
+        when(parkingSpotDAO.getNextAvailableSlot(any(ParkingType.class)))
+        .thenThrow(new NoAvailableSlotException("No available slot found"));
 
-        // Act
-        parkingService.processIncomingVehicle();
 
-        // Assert
+        // Act & assert
+        assertThrows(NoAvailableSlotException.class, () -> parkingService.processIncomingVehicle());
         verify(parkingSpotDAO, never()).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, never()).saveTicket(any(Ticket.class));
     }
 
     @Test
-    void processIncomingVehicleParkingTypeIncorrectInputTest() throws Exception {
+    void processIncomingVehicleParkingTypeIncorrectInputTest() {
         // Arrange
         when(inputReaderUtil.readSelection()).thenReturn(3);
 
-        // Act
-        parkingService.processIncomingVehicle();
-
-        // Assert
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> parkingService.processIncomingVehicle());
         verify(parkingSpotDAO, never()).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, never()).saveTicket(any(Ticket.class));
     }
 
     @Test
-    void processExitingVehicleNominalCaseTest() throws Exception {
+    void processExitingVehicleNominalCaseTest() {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();
@@ -136,7 +130,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWithDiscountTest() throws Exception {
+    void processExitingVehicleWithDiscountTest() {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();
@@ -160,7 +154,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWithUnableUpdateTicketTest() throws Exception {
+    void processExitingVehicleWithUnableUpdateTicketTest() {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         Ticket ticket = createTestTicket();
@@ -178,15 +172,13 @@ class ParkingServiceTest {
     }
 
     @Test
-    void processExitingVehicleWhenNoTicketFoundTest() throws Exception {
+    void processExitingVehicleWhenNoTicketFoundTest() {
         // Arrange
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(null);
 
-        // Act
-        parkingService.processExitingVehicle();
-
-        // Assert
+        // Act & assert
+        assertThrows(NullPointerException.class, () -> parkingService.processExitingVehicle());
         verify(fareCalculatorService, never()).calculateFare(any());
         verify(ticketDAO, never()).updateExitTicket(any());
         verify(parkingSpotDAO, never()).updateParking(any());

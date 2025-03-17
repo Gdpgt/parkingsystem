@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ParkingDataBaseIT {
+class ParkingDataBaseIT {
 
     private static DataBaseTestConfig dataBaseTestConfig;
     private static ParkingSpotDAO parkingSpotDAO;
@@ -40,7 +40,7 @@ public class ParkingDataBaseIT {
     private static InputReaderUtil inputReaderUtil;
 
     @BeforeAll
-    public static void setUp() throws Exception{
+    static void setUp() {
         dataBaseTestConfig = new DataBaseTestConfig();
         parkingSpotDAO = new ParkingSpotDAO();
         parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
@@ -51,7 +51,7 @@ public class ParkingDataBaseIT {
     }
 
     @BeforeEach
-    public void setUpPerTest() throws Exception {
+    void setUpPerTest() {
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
         when(inputReaderUtil.readSelection()).thenReturn(1);
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
@@ -59,7 +59,7 @@ public class ParkingDataBaseIT {
     }
 
     @AfterAll
-    public static void tearDown(){
+    static void tearDown(){
         parkingSpotDAO = null;
         ticketDAO = null;
         dataBasePrepareService = null;
