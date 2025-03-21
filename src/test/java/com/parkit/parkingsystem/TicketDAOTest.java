@@ -87,11 +87,11 @@ class TicketDAOTest {
         // Arrange
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true);
-        when(resultSet.getInt(1)).thenReturn(1);
-        when(resultSet.getInt(2)).thenReturn(1);
+        lenient().when(resultSet.getInt(1)).thenReturn(1);
+        lenient().when(resultSet.getInt(2)).thenReturn(1);
         when(resultSet.getDouble(3)).thenReturn(1.5);
-        when(resultSet.getTimestamp(4)).thenReturn(new java.sql.Timestamp(testTicket.getInTime().getTime()));
-        when(resultSet.getTimestamp(5)).thenReturn(new java.sql.Timestamp(testTicket.getOutTime().getTime()));
+        lenient().when(resultSet.getTimestamp(4)).thenReturn(new java.sql.Timestamp(testTicket.getInTime().getTime()));
+        lenient().when(resultSet.getTimestamp(5)).thenReturn(new java.sql.Timestamp(testTicket.getOutTime().getTime()));
         when(resultSet.getString(6)).thenReturn("CAR");
 
         // Act

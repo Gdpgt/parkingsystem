@@ -73,27 +73,31 @@ class ParkingDataBaseIT {
 
         // Assert
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
-        assertNotNull(ticket, "Le ticket aurait dû être généré.");
-        assertNotNull(ticket.getInTime(), "L'heure d'entrée n'a pas été enregistrée.");
-        assertNull(ticket.getOutTime(), "L'heure de sortie ne devrait pas être renseignée.");
-        assertFalse(ticket.getParkingSpot().isAvailable()
-        , "La place de parking aurait dû être marquée comme occupée.");
-        assertEquals(ticket.getParkingSpot().getId(), parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR) - 1,
-                "La place de parking attribuée ne correspond pas à celle attendue.");
+        assertNotNull(ticket);
+        assertNotNull(ticket.getInTime());
+        assertNull(ticket.getOutTime());
+        assertFalse(ticket.getParkingSpot().isAvailable());
+        assertEquals(ticket.getParkingSpot().getId(), parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR) - 1);
     }
 
     @Test
-    void testParkingLotExit(){
+    void testParkingLotExit() {
         // Act
         parkingService.processIncomingVehicle();
+
+        // Arrange
+        Ticket currentTicket = ticketDAO.getTicket("ABCDEF");
+        currentTicket.setInTime(new Date(System.currentTimeMillis() - (60L * 60 * 1000))); // Voiture garée depuis 1h
+        ticketDAO.updateExitTicketForTest(currentTicket);
+
+        // Act
         parkingService.processExitingVehicle();
 
         // Assert
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
-        assertNotNull(ticket.getOutTime(), "L'heure de sortie devrait être renseignée");
-        assertEquals(0.0, ticket.getPrice(), 0.0001, "Le prix du ticket devrait être égal à 0.");
-        assertEquals(ticket.getParkingSpot().getId(), parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR),
-                "La place de parking libérée ne correspond pas à celle attendue.");
+        assertNotNull(ticket.getOutTime());
+        assertEquals(1.5, ticket.getPrice(), 0.0001);
+        assertEquals(ticket.getParkingSpot().getId(), parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR));
     }
 
     @Test
